@@ -111,4 +111,136 @@ object List {
   def concat[A](l: List[List[A]]): List[A] =
     foldRight(l, Nil:List[A])(append) // replaces Cons with append and keeps Nil
 
+  // Exercise 3.16
+
+  def add1(l: List[Int]): List[Int] =
+    foldRight(l, Nil: List[Int])((n, acc) => Cons(n+1, acc))
+
+  // Exercise 3.17
+
+  def doubles2Strings(l: List[Double]): List[String] =
+    foldRight(l, Nil: List[String])((d, acc) => Cons(d.toString, acc))
+
+  // Exercise 3.18
+
+  def map[A,B](as: List[A])(f: A => B): List[B] =
+    foldRight(as, Nil: List[B])((a, bs) => Cons(f(a), bs))
+
+  // Exercise 3.19
+
+  def filter[A](as: List[A])(f: A => Boolean): List[A] =
+    foldRight(as, Nil: List[A])((a, fas) => if (f(a)) Cons(a, fas) else fas)
+
+  def removeOdds(l: List[Int]): List[Int] =
+    filter(l)(_ % 2 == 0)
+
+  // Exercise 3.20
+
+  def flatMap[A,B](as: List[A])(f: A => List[B]): List[B] =
+    concat(map(as)(f))
+
+  // Exercise 3.21
+
+  def filterViaFlatMap[A](as: List[A])(f: A => Boolean): List[A] =
+    flatMap(as)(a => if (f(a)) List(a) else Nil)
+
+  // Exercise 3.22
+
+  def addCorresponding(as: List[Int], bs: List[Int]): List[Int] =
+    (as, bs) match {
+      case (Nil, _) => Nil
+      case (_, Nil) => Nil
+      case (Cons(a, tas), Cons(b, tbs)) => Cons(a+b, addCorresponding(tas,tbs))
+    }
+
+  // Exercise 3.23
+
+  def zipWith[A,B,C](as: List[A], bs: List[B])(f: (A, B) => C): List[C] =
+    (as, bs) match {
+      case (Nil, _) => Nil
+      case (_, Nil) => Nil
+      case (Cons(a, tas), Cons(b, tbs)) => Cons(f(a,b), zipWith(tas,tbs)(f))
+    }
+
+  // Exercise 3.24
+
+  def hasSubsequence[A](sup: List[A], sub: List[A]): Boolean =
+    (sup, sub) match {
+      case (Nil, Nil) => true
+      case (_, Nil) => true
+      case (Nil, _) => false
+      case (Cons(hsup, tsup), Cons(hsub, tsub)) =>
+        if (hsup == hsub) hasSubsequence(tsup, tsub) || hasSubsequence(tsup, sub)
+        else hasSubsequence(tsup, sub)
+    }
+
+  @annotation.tailrec
+  def startsWith[A](l: List[A], start: List[A]): Boolean =
+    (l, start) match {
+      case (_, Nil) => true
+      case (Nil, _) => false
+      case (Cons(hl, tl), Cons(hstart, tstart)) =>
+        if (hl == hstart) startsWith(tl, tstart)
+        else false
+    }
+
+  @annotation.tailrec
+  def hasSubsequenceTailRec[A](sup: List[A], sub: List[A]): Boolean =
+    if (startsWith(sup, sub)) true
+    else sup match {
+      case Nil => false
+      case Cons(_, tsup) => hasSubsequenceTailRec(tsup, sub)
+    }
+
+}
+
+sealed trait Tree[+A]
+case class Leaf[A](value: A) extends Tree[A]
+case class Branch[A](left: Tree[A], right: Tree[A]) extends Tree[A]
+
+object Tree {
+
+  // Exercise 3.25
+
+  def size[A](t: Tree[A]): Int = t match {
+    case Leaf(_) => 1
+    case Branch(l, r) => 1 + size(l) + size(r)
+  }
+
+  // Exercise 3.26
+
+  def maximum(t: Tree[Int]): Int = t match {
+    case Leaf(n) => n
+    case Branch(l, r) => maximum(l) max maximum(r)
+  }
+
+  // Exercise 3.27
+
+  def depth[A](t: Tree[A]): Int = t match {
+    case Leaf(_) => 0
+    case Branch(l, r) => 1 + (depth(l) max depth(r))
+  }
+
+  // Exercise 3.28
+
+  def map[A,B](t: Tree[A])(f: A => B): Tree[B] = t match {
+    case Leaf(a) => Leaf(f(a))
+    case Branch(l, r) => Branch(map(l)(f), map(r)(f))
+  }
+
+  // Exercise 3.29
+
+  def fold[A,B](t: Tree[A])(f: A => B)(g: (B, B) => B): B = t match {
+    case Leaf(a) => f(a)
+    case Branch(l, r) => g(fold(l)(f)(g), fold(r)(f)(g))
+  }
+
+  def sizeViaFold[A](t: Tree[A]): Int =
+    fold(t)(_ => 1)(1 + _ + _)
+
+  def maximumViaFold(t: Tree[Int]): Int =
+    fold(t)(n => n)(_ max _)
+
+  def depthViaFold[A](t: Tree[A]): Int =
+    fold(t)(_ => 0)(1 + _ max _)
 }
